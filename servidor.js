@@ -26,6 +26,8 @@ try {
       this.socket = socket;
       this.readyState = ESTADO_ABIERTO;
       this.bufferRecepcion = Buffer.alloc(0);
+      this.fragmentosContinuacion = [];
+      this.opcodeFragmentado = 0;
 
       this.socket.on('data', (fragmento) => this.procesarDatosEntrantes(fragmento));
       this.socket.on('close', () => {
@@ -86,6 +88,8 @@ try {
           }
         }
 
+        const esFinal = (primerByte & 0x80) !== 0;
+
         if (codigoOperacion === 0x08) {
           // Trama de cierre
           this.close();
@@ -94,8 +98,22 @@ try {
           // Ping -> responder Pong
           this.enviarTrama(datosCarga, 0x0a);
         } else if (codigoOperacion === 0x01 || codigoOperacion === 0x02) {
-          const esBinario = codigoOperacion === 0x02;
-          this.emit('message', datosCarga, esBinario);
+          if (esFinal) {
+            const esBinario = codigoOperacion === 0x02;
+            this.emit('message', datosCarga, esBinario);
+          } else {
+            this.opcodeFragmentado = codigoOperacion;
+            this.fragmentosContinuacion = [datosCarga];
+          }
+        } else if (codigoOperacion === 0x00 && this.fragmentosContinuacion.length > 0) {
+          this.fragmentosContinuacion.push(datosCarga);
+          if (esFinal) {
+            const mensajeCompleto = Buffer.concat(this.fragmentosContinuacion);
+            const esBinario = this.opcodeFragmentado === 0x02;
+            this.fragmentosContinuacion = [];
+            this.opcodeFragmentado = 0;
+            this.emit('message', mensajeCompleto, esBinario);
+          }
         }
       }
     }
@@ -961,15 +979,29 @@ servidorWs.on('connection', (cliente) => {
 
       const anterior = agentesEnNube.get(idLimpio);
       const controladoresPrevios = anterior ? anterior.controladores : new Set();
+      const urlTunelPrevia = anterior && anterior.urlTunel ? anterior.urlTunel : '';
 
       agentesEnNube.set(idLimpio, {
         socket: cliente,
         idEquipo: idLimpio,
         usuario: String(comando.usuario || 'Windows'),
+        urlTunel: urlTunelPrevia,
         monitores: Array.isArray(comando.monitores) ? comando.monitores : [],
         conectadoDesde: new Date().toLocaleTimeString(),
         controladores: controladoresPrevios
       });
+
+      // Si ya había controladores autenticados esperando reconexión, reactivar captura
+      for (const ctrl of controladoresPrevios) {
+        if (ctrl.autenticado && ctrl.readyState === ESTADO_ABIERTO) {
+          enviarJsonACliente(cliente, {
+            tipo: 'autenticar_controlador_nube',
+            idSesion: ctrl.idSesion,
+            clave: configuracion.claveAcceso
+          });
+          break;
+        }
+      }
 
       console.log(`[HUB NUBE] Equipo registrado en línea: ${idLimpio} (${comando.usuario || 'Windows'})`);
       enviarJsonACliente(cliente, { tipo: 'registro_agente_ok', idEquipo: idLimpio });
