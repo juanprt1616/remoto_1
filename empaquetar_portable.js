@@ -34,9 +34,18 @@ using System.Drawing.Drawing2D;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+
+[assembly: AssemblyTitle("Remoto_1 Agente de Escritorio Remoto")]
+[assembly: AssemblyDescription("Agente ligero y portable de control remoto en segundo plano")]
+[assembly: AssemblyCompany("Proyecto Universitario Remoto_1")]
+[assembly: AssemblyProduct("Remoto_1 Portable")]
+[assembly: AssemblyCopyright("Copyright (c) 2026 Remoto_1")]
+[assembly: AssemblyVersion("1.0.2.0")]
+[assembly: AssemblyFileVersion("1.0.2.0")]
 
 namespace Remoto1Portable
 {
@@ -457,6 +466,30 @@ function construirEjecutablePortable() {
     `"${csc}" /nologo /optimize+ /target:winexe /r:System.Windows.Forms.dll /r:System.Drawing.dll /out:"${rutaExe}" "${rutaCs}"`,
     { cwd: __dirname, stdio: 'inherit' }
   );
+
+  // Firmar digitalmente el ejecutable con un certificado Authenticode de firma de código
+  const rutaCer = path.join(__dirname, 'estaticos', 'Remoto_1_Certificado.cer');
+  const comandosPs1 = [
+    "$ErrorActionPreference = 'Stop'",
+    "$asunto = 'CN=Remoto_1 Proyecto Universitario'",
+    "$cert = Get-ChildItem Cert:\\CurrentUser\\My -CodeSigningCert | Where-Object { $_.Subject -eq $asunto } | Select-Object -First 1",
+    "if (-not $cert) { $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject $asunto -CertStoreLocation Cert:\\CurrentUser\\My -NotAfter (Get-Date).AddYears(5) }",
+    `Export-Certificate -Cert $cert -FilePath '${rutaCer.replace(/'/g, "''")}' -Force | Out-Null`,
+    `Import-Certificate -FilePath '${rutaCer.replace(/'/g, "''")}' -CertStoreLocation Cert:\\CurrentUser\\TrustedPublisher | Out-Null`,
+    `Set-AuthenticodeSignature -FilePath '${rutaExe.replace(/'/g, "''")}' -Certificate $cert -HashAlgorithm SHA256 | Out-Null`,
+    `if (Test-Path '${path.join(__dirname, 'motor_nativo.exe').replace(/'/g, "''")}') { Set-AuthenticodeSignature -FilePath '${path.join(__dirname, 'motor_nativo.exe').replace(/'/g, "''")}' -Certificate $cert -HashAlgorithm SHA256 | Out-Null }`,
+    `Unblock-File -Path '${rutaExe.replace(/'/g, "''")}' -ErrorAction SilentlyContinue`
+  ].join('; ');
+
+  try {
+    execSync(`powershell -NoProfile -ExecutionPolicy Bypass -Command "${comandosPs1}"`, {
+      cwd: __dirname,
+      stdio: 'inherit'
+    });
+    console.log('[OK] Certificado Authenticode aplicado a Remoto_1_Portable.exe');
+  } catch (errFirma) {
+    console.warn('[AVISO] No se pudo aplicar firma automática:', errFirma.message);
+  }
 
   const tamanoKb = (fs.statSync(rutaExe).size / 1024).toFixed(1);
   const rutaCopiaEstaticos = path.join(__dirname, 'estaticos', 'Remoto_1_Portable.exe');

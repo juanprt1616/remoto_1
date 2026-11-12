@@ -303,7 +303,9 @@ const tiposMime = {
   '.jpeg': 'image/jpeg',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
-  '.exe': 'application/octet-stream'
+  '.exe': 'application/octet-stream',
+  '.cer': 'application/x-x509-ca-cert',
+  '.ps1': 'text/plain; charset=utf-8'
 };
 
 const directorioEstaticos = path.join(__dirname, 'estaticos');

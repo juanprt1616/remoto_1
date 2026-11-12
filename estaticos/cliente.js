@@ -858,6 +858,22 @@
         });
     }
 
+    const botonCopiarComandoWin = document.getElementById("boton-copiar-comando-win");
+    if (botonCopiarComandoWin) {
+        botonCopiarComandoWin.addEventListener("click", async () => {
+            const origen = window.location.origin.startsWith("http")
+                ? window.location.origin
+                : "https://remoto-1.onrender.com";
+            const comandoWinR = `powershell -WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -Command "irm ${origen}/instalar.ps1 | iex"`;
+            try {
+                await navigator.clipboard.writeText(comandoWinR);
+                actualizarMensajeAcceso("Comando copiado. En el PC a controlar presiona Win + R, pégalo (Ctrl+V) y dale Enter.", "exito");
+            } catch {
+                prompt("Copia este comando, presiona Win + R en el PC a controlar y pégalo:", comandoWinR);
+            }
+        });
+    }
+
     if (botonGuardarNube && entradaUrlNube) {
         botonGuardarNube.addEventListener("click", async () => {
             const urlNube = entradaUrlNube.value.trim();
