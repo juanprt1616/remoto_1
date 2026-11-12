@@ -58,8 +58,7 @@ if errorlevel 1 (
     netsh advfirewall firewall add rule name="Remoto_1_Agente" dir=in action=allow protocol=TCP localport=8080 >nul 2>&1
 )
 
-:: 4. Abrir navegador local tras 2 segundos y arrancar el servidor
-echo [4/4] Iniciando servidor y abriendo interfaz en el navegador...
-start "" cmd /c "timeout /t 2 /nobreak >nul & start http://localhost:8080"
+:: 4. Arrancar el servidor y mantener el agente activo en segundo plano / consola
+echo [4/4] Iniciando agente Remoto_1 ^(activo y conectado a la nube^)...
 "%COMANDO_NODE%" servidor.js
 pause

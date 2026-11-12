@@ -63,7 +63,7 @@ Aplicación minimalista, privada y autohospedada de escritorio remoto para **Win
   1. Extrae automáticamente la carpeta `Remoto_1_Portable` con todos los archivos del sistema si no están presentes.
   2. Compila `motor_nativo.exe` usando el compilador `.NET` nativo de Windows.
   3. Verifica si **Node.js** está instalado; si el equipo no lo tiene, **descarga automáticamente el binario oficial portable `node.exe`** dentro de la carpeta sin pedir instaladores manuales.
-  4. Configura el permiso en el Firewall de Windows (puerto TCP `8080`), arranca el servidor y abre el navegador en `http://localhost:8080`.
+  4. Configura el permiso en el Firewall de Windows (puerto TCP `8080`) y deja el agente activo y conectado a la nube sin abrir ventanas del navegador en el equipo controlado.
 - **Reconstruir el ejecutable portable tras hacer cambios en el código**:
   ```powershell
   node empaquetar_portable.js

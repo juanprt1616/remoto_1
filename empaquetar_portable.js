@@ -91,29 +91,9 @@ ${entradasCs}
                 }
 
                 Console.WriteLine("===============================================================");
-                Console.WriteLine("  Iniciando servidor Remoto_1 y abriendo navegador...");
+                Console.WriteLine("  Agente Remoto_1 activo y conectado a la nube.");
                 Console.WriteLine("  (Cierra esta ventana cuando desees apagar el acceso remoto)");
                 Console.WriteLine("===============================================================");
-
-                // Abrir el navegador automáticamente después de 1.8 segundos
-                Thread hiloNavegador = new Thread(() =>
-                {
-                    Thread.Sleep(1800);
-                    try
-                    {
-                        Process.Start(new ProcessStartInfo
-                        {
-                            FileName = "http://localhost:8080",
-                            UseShellExecute = true
-                        });
-                    }
-                    catch
-                    {
-                        // Ignorar si no hay navegador predeterminado
-                    }
-                });
-                hiloNavegador.IsBackground = true;
-                hiloNavegador.Start();
 
                 ProcessStartInfo infoServidor = new ProcessStartInfo
                 {
