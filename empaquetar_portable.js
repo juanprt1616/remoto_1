@@ -1,6 +1,6 @@
-// Generador del ejecutable único autoextraíble e iniciador portable (Remoto_1_Portable.exe)
-// Empaqueta todos los archivos del proyecto en un único .exe nativo de Windows 10/11
-// que extrae la carpeta Remoto_1, descarga Node.js portable si no existe, compila el motor y arranca todo con 1 clic.
+// Generador del ejecutable único autoextraíble e iniciador portable en segundo plano (Remoto_1_Portable.exe)
+// Empaqueta todos los archivos del proyecto en un único .exe nativo de Windows 10/11 (/target:winexe)
+// que se ejecuta sin ventana negra de consola y permanece únicamente en la bandeja del sistema ("Iconos ocultos").
 
 const fs = require('fs');
 const path = require('path');
@@ -29,11 +29,14 @@ function generarCodigoInstaladorCs(mapaArchivosComprimidos) {
   return `using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Text;
 using System.Threading;
+using System.Windows.Forms;
 
 namespace Remoto1Portable
 {
@@ -44,12 +47,16 @@ namespace Remoto1Portable
 ${entradasCs}
         };
 
+        private static Process procesoServidor;
+        private static NotifyIcon iconoBandeja;
+        private static bool saliendoIntencionalmente = false;
+        private static string rutaNodeGlobal = "";
+        private static string directorioDestinoGlobal = "";
+        private static Mutex mutexInstancia;
+
         [STAThread]
         public static int Main(string[] argumentos)
         {
-            Console.OutputEncoding = Encoding.UTF8;
-            Console.Title = "Remoto_1 — Ejecutador e Instalador Portable";
-
             bool modoSoloPreparar = false;
             foreach (string arg in argumentos)
             {
@@ -59,84 +66,196 @@ ${entradasCs}
                 }
             }
 
-            Console.WriteLine("===============================================================");
-            Console.WriteLine("  REMOTO_1 — EJECUTADOR PORTABLE TODO-EN-UNO (WINDOWS 10/11)");
-            Console.WriteLine("===============================================================");
-
             try
             {
                 string directorioEjecutable = AppDomain.CurrentDomain.BaseDirectory;
-                string directorioDestino = DeterminarDirectorioDestino(directorioEjecutable);
+                directorioDestinoGlobal = DeterminarDirectorioDestino(directorioEjecutable);
 
-                Console.WriteLine("[1/4] Verificando y extrayendo archivos de Remoto_1 en:");
-                Console.WriteLine("      " + directorioDestino);
-                ExtraerArchivosProyecto(directorioDestino);
-
-                Console.WriteLine("[2/4] Verificando motor nativo de captura y control (motor_nativo.exe)...");
-                AsegurarMotorNativoCompilado(directorioDestino);
-
-                Console.WriteLine("[3/4] Verificando Node.js en este equipo...");
-                string rutaNode = AsegurarNodeDisponible(directorioDestino);
-                Console.WriteLine("      [OK] Motor Node.js listo: " + rutaNode);
-
-                Console.WriteLine("[4/4] Configurando regla de acceso en Firewall de Windows (Puerto 8080)...");
+                ExtraerArchivosProyecto(directorioDestinoGlobal);
+                AsegurarMotorNativoCompilado(directorioDestinoGlobal);
+                rutaNodeGlobal = AsegurarNodeDisponible(directorioDestinoGlobal);
                 ConfigurarReglaFirewall();
 
                 if (modoSoloPreparar)
                 {
-                    Console.WriteLine("===============================================================");
-                    Console.WriteLine("  [OK] INSTALACIÓN PORTABLE VERIFICADA Y LISTA PARA USAR");
-                    Console.WriteLine("===============================================================");
                     return 0;
                 }
 
-                Console.WriteLine("===============================================================");
-                Console.WriteLine("  Agente Remoto_1 activo y conectado a la nube.");
-                Console.WriteLine("  (Cierra esta ventana cuando desees apagar el acceso remoto)");
-                Console.WriteLine("===============================================================");
-
-                ProcessStartInfo infoServidor = new ProcessStartInfo
+                bool esNuevaInstancia;
+                mutexInstancia = new Mutex(true, "Local\\\\Remoto_1_Portable_Agente_Unico", out esNuevaInstancia);
+                if (!esNuevaInstancia)
                 {
-                    FileName = rutaNode,
-                    Arguments = "\\"" + Path.Combine(directorioDestino, "servidor.js") + "\\"",
-                    WorkingDirectory = directorioDestino,
-                    UseShellExecute = false
-                };
-
-                using (Process procesoServidor = Process.Start(infoServidor))
-                {
-                    if (procesoServidor != null)
-                    {
-                        procesoServidor.WaitForExit();
-                    }
+                    return 0;
                 }
+
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+
+                IniciarProcesoServidorOculto();
+                CrearIconoEnIconosOcultos();
+
+                Application.ApplicationExit += (s, e) => DetenerProcesoServidor();
+                Application.Run();
 
                 return 0;
             }
             catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("[ERROR] " + ex.Message);
-                Console.ResetColor();
                 if (!modoSoloPreparar)
                 {
-                    Console.WriteLine("Presiona Enter para salir...");
-                    Console.ReadLine();
+                    MessageBox.Show(
+                        "Error al iniciar Remoto_1 en segundo plano:\\n" + ex.Message,
+                        "Remoto_1",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error
+                    );
                 }
                 return 1;
             }
         }
 
+        private static void IniciarProcesoServidorOculto()
+        {
+            DetenerProcesoServidor();
+
+            ProcessStartInfo infoServidor = new ProcessStartInfo
+            {
+                FileName = rutaNodeGlobal,
+                Arguments = "\\"" + Path.Combine(directorioDestinoGlobal, "servidor.js") + "\\"",
+                WorkingDirectory = directorioDestinoGlobal,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden
+            };
+
+            procesoServidor = Process.Start(infoServidor);
+            if (procesoServidor != null)
+            {
+                procesoServidor.EnableRaisingEvents = true;
+                procesoServidor.Exited += (s, e) =>
+                {
+                    if (!saliendoIntencionalmente)
+                    {
+                        Thread.Sleep(2500);
+                        if (!saliendoIntencionalmente)
+                        {
+                            try
+                            {
+                                IniciarProcesoServidorOculto();
+                            }
+                            catch
+                            {
+                                // Ignorar si está cerrando
+                            }
+                        }
+                    }
+                };
+            }
+        }
+
+        private static void DetenerProcesoServidor()
+        {
+            try
+            {
+                if (procesoServidor != null && !procesoServidor.HasExited)
+                {
+                    procesoServidor.Kill();
+                    procesoServidor.WaitForExit(1500);
+                }
+            }
+            catch
+            {
+                // Ignorar si ya finalizó
+            }
+            procesoServidor = null;
+        }
+
+        private static void CrearIconoEnIconosOcultos()
+        {
+            ContextMenu menuContextual = new ContextMenu();
+
+            MenuItem itemEstado = new MenuItem("Remoto_1 Activo (" + Environment.MachineName + ")");
+            itemEstado.Enabled = false;
+            menuContextual.MenuItems.Add(itemEstado);
+
+            menuContextual.MenuItems.Add("-");
+
+            MenuItem itemReiniciar = new MenuItem("Reiniciar conexión en segundo plano", (s, e) =>
+            {
+                IniciarProcesoServidorOculto();
+                if (iconoBandeja != null)
+                {
+                    iconoBandeja.ShowBalloonTip(
+                        2000,
+                        "Remoto_1",
+                        "Conexión reiniciada en segundo plano.",
+                        ToolTipIcon.Info
+                    );
+                }
+            });
+            menuContextual.MenuItems.Add(itemReiniciar);
+
+            MenuItem itemSalir = new MenuItem("Cerrar Remoto_1 (Apagar acceso)", (s, e) =>
+            {
+                saliendoIntencionalmente = true;
+                if (iconoBandeja != null)
+                {
+                    iconoBandeja.Visible = false;
+                    iconoBandeja.Dispose();
+                }
+                DetenerProcesoServidor();
+                Application.Exit();
+                Environment.Exit(0);
+            });
+            menuContextual.MenuItems.Add(itemSalir);
+
+            iconoBandeja = new NotifyIcon
+            {
+                Icon = GenerarIconoMonitor(),
+                Text = "Remoto_1 — Activo (" + Environment.MachineName + ")",
+                ContextMenu = menuContextual,
+                Visible = true
+            };
+
+            iconoBandeja.ShowBalloonTip(
+                2500,
+                "Remoto_1 activo en segundo plano",
+                "Equipo '" + Environment.MachineName + "' conectado y disponible en Iconos ocultos.",
+                ToolTipIcon.Info
+            );
+        }
+
+        private static Icon GenerarIconoMonitor()
+        {
+            using (Bitmap bmp = new Bitmap(32, 32))
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+
+                using (SolidBrush fondo = new SolidBrush(Color.FromArgb(37, 99, 235)))
+                using (Pen borde = new Pen(Color.FromArgb(147, 197, 253), 2f))
+                using (SolidBrush puntoVerde = new SolidBrush(Color.FromArgb(16, 185, 129)))
+                {
+                    g.FillRectangle(fondo, 3, 4, 26, 18);
+                    g.DrawRectangle(borde, 3, 4, 26, 18);
+                    g.DrawLine(borde, 16, 22, 16, 27);
+                    g.DrawLine(borde, 10, 27, 22, 27);
+                    g.FillEllipse(puntoVerde, 21, 15, 9, 9);
+                }
+
+                return Icon.FromHandle(bmp.GetHicon());
+            }
+        }
+
         private static string DeterminarDirectorioDestino(string directorioBase)
         {
-            // Si ya estamos dentro de la carpeta del proyecto (existe servidor.js), usarla directamente
             if (File.Exists(Path.Combine(directorioBase, "servidor.js")) &&
                 File.Exists(Path.Combine(directorioBase, "motor_nativo.cs")))
             {
                 return directorioBase;
             }
 
-            // Si el .exe se copió suelto en otro PC (ej. Escritorio o Descargas), crear subcarpeta Remoto_1_Portable
             string subcarpeta = Path.Combine(directorioBase, "Remoto_1_Portable");
             if (!Directory.Exists(subcarpeta))
             {
@@ -158,13 +277,19 @@ ${entradasCs}
                     Directory.CreateDirectory(carpetaPadre);
                 }
 
-                // Extraer y actualizar siempre los archivos del sistema
-                byte[] bytesComprimidos = Convert.FromBase64String(par.Value);
-                using (MemoryStream entrada = new MemoryStream(bytesComprimidos))
-                using (GZipStream gzip = new GZipStream(entrada, CompressionMode.Decompress))
-                using (FileStream salida = new FileStream(rutaCompleta, FileMode.Create, FileAccess.Write))
+                try
                 {
-                    gzip.CopyTo(salida);
+                    byte[] bytesComprimidos = Convert.FromBase64String(par.Value);
+                    using (MemoryStream entrada = new MemoryStream(bytesComprimidos))
+                    using (GZipStream gzip = new GZipStream(entrada, CompressionMode.Decompress))
+                    using (FileStream salida = new FileStream(rutaCompleta, FileMode.Create, FileAccess.Write))
+                    {
+                        gzip.CopyTo(salida);
+                    }
+                }
+                catch
+                {
+                    // Si algún archivo ya está en uso por otra instancia, conservar el existente
                 }
             }
         }
@@ -217,21 +342,18 @@ ${entradasCs}
 
         private static string AsegurarNodeDisponible(string directorioDestino)
         {
-            // 1. Verificar si existe node.exe portable en la misma carpeta
             string nodeLocal = Path.Combine(directorioDestino, "node.exe");
             if (File.Exists(nodeLocal))
             {
                 return nodeLocal;
             }
 
-            // 2. Verificar ubicación estándar de instalación en Windows
             string nodeArchivosPrograma = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "nodejs", "node.exe");
             if (File.Exists(nodeArchivosPrograma))
             {
                 return nodeArchivosPrograma;
             }
 
-            // 3. Verificar en variable PATH del sistema
             try
             {
                 ProcessStartInfo psiWhere = new ProcessStartInfo
@@ -260,10 +382,6 @@ ${entradasCs}
                 // Continuar con descarga automática
             }
 
-            // 4. Descargar automáticamente el ejecutable oficial portable de Node.js (sin requerir instalador MSI)
-            Console.WriteLine("      Node.js no está instalado en este PC.");
-            Console.WriteLine("      Descargando automáticamente Node.js Portable oficial (node.exe)...");
-
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             string urlNodePortable = Environment.Is64BitOperatingSystem
                 ? "https://nodejs.org/dist/v22.11.0/win-x64/node.exe"
@@ -279,7 +397,6 @@ ${entradasCs}
             {
                 if (File.Exists(nodeLocal)) File.Delete(nodeLocal);
                 File.Move(rutaTemporal, nodeLocal);
-                Console.WriteLine("      [OK] Node.js Portable descargado e instalado localmente.");
                 return nodeLocal;
             }
 
@@ -337,14 +454,14 @@ function construirEjecutablePortable() {
 
   const csc = 'C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe';
   execSync(
-    `"${csc}" /nologo /optimize+ /target:exe /out:"${rutaExe}" "${rutaCs}"`,
+    `"${csc}" /nologo /optimize+ /target:winexe /r:System.Windows.Forms.dll /r:System.Drawing.dll /out:"${rutaExe}" "${rutaCs}"`,
     { cwd: __dirname, stdio: 'inherit' }
   );
 
   const tamanoKb = (fs.statSync(rutaExe).size / 1024).toFixed(1);
   const rutaCopiaEstaticos = path.join(__dirname, 'estaticos', 'Remoto_1_Portable.exe');
   fs.copyFileSync(rutaExe, rutaCopiaEstaticos);
-  console.log(`[OK] Ejecutable único creado exitosamente: Remoto_1_Portable.exe (${tamanoKb} KB) y copiado a estaticos/`);
+  console.log(`[OK] Ejecutable silencioso (bandeja del sistema) creado: Remoto_1_Portable.exe (${tamanoKb} KB) y copiado a estaticos/`);
 }
 
 construirEjecutablePortable();

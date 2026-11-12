@@ -58,7 +58,11 @@ if errorlevel 1 (
     netsh advfirewall firewall add rule name="Remoto_1_Agente" dir=in action=allow protocol=TCP localport=8080 >nul 2>&1
 )
 
-:: 4. Arrancar el servidor y mantener el agente activo en segundo plano / consola
-echo [4/4] Iniciando agente Remoto_1 ^(activo y conectado a la nube^)...
-"%COMANDO_NODE%" servidor.js
-pause
+:: 4. Arrancar el servidor en segundo plano (sin dejar ventana negra abierta)
+echo [4/4] Iniciando agente Remoto_1 en segundo plano...
+if exist "%~dp0Remoto_1_Portable.exe" (
+    start "" "%~dp0Remoto_1_Portable.exe"
+) else (
+    powershell -NoProfile -WindowStyle Hidden -Command "Start-Process -FilePath '%COMANDO_NODE%' -ArgumentList 'servidor.js' -WorkingDirectory '%~dp0' -WindowStyle Hidden"
+)
+exit /b 0
