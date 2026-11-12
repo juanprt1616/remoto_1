@@ -1182,6 +1182,7 @@ function normalizarUrlHttpNube(urlCruda) {
 }
 
 async function enviarLatidoHttpNube() {
+  if (!esWindows) return;
   const urlBaseHttp = normalizarUrlHttpNube(configuracion.urlNube);
   if (!urlBaseHttp || typeof fetch === 'undefined') return;
   try {
@@ -1215,6 +1216,7 @@ function normalizarUrlWsNube(urlCruda) {
 }
 
 function iniciarConexionHaciaApiNube() {
+  if (!esWindows) return;
   if (temporizadorReconexionNube) {
     clearTimeout(temporizadorReconexionNube);
     temporizadorReconexionNube = null;

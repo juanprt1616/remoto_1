@@ -3,21 +3,24 @@ const os = require('os');
 const fs = require('fs');
 const path = require('path');
 
-let urlNubeGuardada = '';
+let urlNubeGuardada = 'https://remoto-1.onrender.com';
 try {
   const rutaArchivoNube = path.join(__dirname, 'url_nube.txt');
   if (fs.existsSync(rutaArchivoNube)) {
-    urlNubeGuardada = fs.readFileSync(rutaArchivoNube, 'utf8').trim();
+    const leido = fs.readFileSync(rutaArchivoNube, 'utf8').trim();
+    if (leido) {
+      urlNubeGuardada = leido;
+    }
   }
 } catch (err) {
-  // Ignorar si no existe
+  // Usar valor por defecto de Render
 }
 
 const configuracion = {
   puerto: parseInt(process.env.PORT || process.env.PUERTO || '8080', 10),
   claveAcceso: process.env.CLAVE_REMOTA || 'remoto123',
   idEquipo: process.env.ID_EQUIPO || os.hostname() || 'PC-REMOTO',
-  urlNube: process.env.URL_NUBE || urlNubeGuardada || '',
+  urlNube: process.env.URL_NUBE !== undefined ? process.env.URL_NUBE : urlNubeGuardada,
   activarTunelAutomatico: process.env.TUNEL_AUTO !== 'false',
   calidadInicial: parseInt(process.env.CALIDAD_INICIAL || '70', 10),
   fpsInicial: parseInt(process.env.FPS_INICIAL || '20', 10),
