@@ -1,0 +1,12 @@
+{
+  "name": "remoto-1",
+  "version": "1.0.0",
+  "description": "Sistema de escritorio remoto para Windows 10/11 controlado desde navegador",
+  "main": "servidor.js",
+  "scripts": {
+    "iniciar": "node servidor.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

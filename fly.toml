@@ -1,0 +1,18 @@
+# Configuración de despliegue en la nube para Fly.io (conectado con GitHub)
+app = "remoto-1-hub"
+primary_region = "bog"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  TUNEL_AUTO = "false"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]

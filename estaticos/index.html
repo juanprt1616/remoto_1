@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remoto_1 — Controlador de Escritorio Remoto</title>
+    <link rel="stylesheet" href="/estilos.css">
+</head>
+<body>
+    <!-- Modal de Autenticación -->
+    <div id="modal-autenticacion" class="capa-modal">
+        <div class="tarjeta-modal">
+            <div class="encabezado-modal">
+                <div class="icono-sistema">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                </div>
+                <div>
+                    <h1>Remoto_1</h1>
+                    <p class="subtitulo-modal">Acceso de Control Remoto en Tiempo Real</p>
+                </div>
+            </div>
+
+            <div class="cuerpo-modal">
+                <div id="caja-info-red" class="caja-info-red">
+                    <div class="titulo-info-red">Accesos de este equipo (Internet y Red):</div>
+                    <div id="lista-direcciones-red" class="lista-direcciones-red">Detectando enlaces...</div>
+                </div>
+
+                <div class="seccion-equipos-nube">
+                    <div class="cabecera-equipos-nube">
+                        <span class="etiqueta-campo">Equipos en Línea (Clic para elegir sin IP)</span>
+                        <button type="button" id="boton-refrescar-equipos" class="boton-mini-enlace" title="Actualizar lista de equipos en línea">Actualizar</button>
+                    </div>
+                    <div id="lista-equipos-nube" class="lista-equipos-nube">
+                        <span class="texto-vacio-equipos">Buscando equipos conectados...</span>
+                    </div>
+                </div>
+
+                <label for="entrada-id-equipo" class="etiqueta-campo">Nombre / ID del equipo a controlar</label>
+                <div class="grupo-entrada">
+                    <input
+                        type="text"
+                        id="entrada-id-equipo"
+                        placeholder="Ej: PCJUAN (se llena al hacer clic arriba)"
+                        autocomplete="off"
+                    >
+                </div>
+
+                <label for="entrada-clave" class="etiqueta-campo">Clave de acceso del equipo remoto</label>
+                <div class="grupo-entrada">
+                    <input
+                        type="password"
+                        id="entrada-clave"
+                        placeholder="Ingresa la clave de acceso (ej: remoto123)..."
+                        autocomplete="current-password"
+                        autofocus
+                    >
+                    <button type="button" id="boton-mostrar-clave" class="boton-icono" title="Mostrar u ocultar clave">
+                        Ver
+                    </button>
+                </div>
+
+                <details class="opciones-avanzadas-nube">
+                    <summary>Opciones de Servidor / API en la Nube (GitHub / Fly / Render)</summary>
+                    <div class="cuerpo-opciones-nube">
+                        <label for="entrada-servidor" class="etiqueta-campo">Servidor API o IP directa</label>
+                        <div class="grupo-entrada">
+                            <input
+                                type="text"
+                                id="entrada-servidor"
+                                placeholder="Ej: tu-api.onrender.com o 192.168.0.12:8080"
+                                autocomplete="off"
+                            >
+                        </div>
+                        <label for="entrada-url-nube" class="etiqueta-campo">Auto-registrar este .exe en URL de API en la Nube</label>
+                        <div class="grupo-entrada">
+                            <input
+                                type="text"
+                                id="entrada-url-nube"
+                                placeholder="Ej: https://tu-api.fly.dev"
+                                autocomplete="off"
+                            >
+                            <button type="button" id="boton-guardar-nube" class="boton-icono" title="Guardar y vincular con la API en la nube">
+                                Vincular
+                            </button>
+                        </div>
+                    </div>
+                </details>
+
+                <div id="mensaje-estado-acceso" class="mensaje-estado">Conectando con el agente remoto...</div>
+                <button type="button" id="boton-conectar" class="boton-primario">Conectar al Equipo</button>
+                <a href="/Remoto_1_Portable.exe" download="Remoto_1_Portable.exe" class="boton-descargar-exe">
+                    ⬇ Descargar Remoto_1_Portable.exe (Para el PC a controlar)
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pestaña flotante para restaurar barra cuando está minimizada -->
+    <button type="button" id="boton-restaurar-hud" class="pestana-hud oculto" title="Mostrar barra de control">
+        <span>Mostrar Controles</span>
+        <span id="mini-fps">0 FPS</span>
+        <span id="mini-latencia">0 ms</span>
+    </button>
+
+    <!-- Barra Superior Flotante Colapsable (HUD) -->
+    <header id="barra-hud" class="barra-hud">
+        <div class="hud-seccion hud-indicadores">
+            <span id="indicador-estado" class="pildora estado-desconectado">Desconectado</span>
+            <span id="indicador-fps" class="pildora" title="Cuadros por segundo recibidos">0 FPS</span>
+            <span id="indicador-latencia" class="pildora" title="Latencia de ida y vuelta">0 ms</span>
+            <span id="indicador-ancho-banda" class="pildora" title="Velocidad de recepción de video">0 KB/s</span>
+            <span id="indicador-resolucion" class="pildora" title="Resolución del lienzo remoto">0 × 0</span>
+        </div>
+
+        <div class="hud-seccion hud-controles">
+            <label class="control-en-linea" title="Seleccionar pantalla remota">
+                <span>Monitor</span>
+                <select id="selector-monitor">
+                    <option value="0">Monitor 1</option>
+                </select>
+            </label>
+
+            <label class="control-en-linea" title="Calidad de compresión JPEG">
+                <span>Calidad</span>
+                <select id="selector-calidad">
+                    <option value="10">10%</option>
+                    <option value="20">20%</option>
+                    <option value="35">35%</option>
+                    <option value="50">50%</option>
+                    <option value="65">65%</option>
+                    <option value="70" selected>70%</option>
+                    <option value="80">80%</option>
+                    <option value="95">95%</option>
+                </select>
+            </label>
+
+            <label class="control-en-linea" title="Escala de resolución de captura">
+                <span>Escala</span>
+                <select id="selector-escala">
+                    <option value="0.25">25%</option>
+                    <option value="0.5">50%</option>
+                    <option value="0.75">75%</option>
+                    <option value="0.8" selected>80%</option>
+                    <option value="1.0">100%</option>
+                </select>
+            </label>
+
+            <label class="control-en-linea" title="Límite de cuadros por segundo">
+                <span>FPS máx</span>
+                <select id="selector-fps">
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="20" selected>20</option>
+                    <option value="24">24</option>
+                    <option value="30">30</option>
+                    <option value="45">45</option>
+                    <option value="60">60</option>
+                </select>
+            </label>
+
+            <div class="separador-vertical"></div>
+
+            <button type="button" id="boton-portapapeles" class="boton-hud" title="Sincronizar portapapeles y enviar texto">
+                Portapapeles
+            </button>
+
+            <div class="grupo-teclas-rapidas">
+                <button type="button" id="boton-tecla-win" class="boton-hud" title="Enviar tecla Windows al equipo remoto">
+                    Win
+                </button>
+                <button type="button" id="boton-ctrl-alt-supr" class="boton-hud" title="Enviar combinación Ctrl+Alt+Supr / Administrador de tareas">
+                    Ctrl+Alt+Supr
+                </button>
+            </div>
+
+            <button type="button" id="boton-pantalla-completa" class="boton-hud" title="Alternar pantalla completa">
+                Pantalla Completa
+            </button>
+
+            <button type="button" id="boton-desconectar" class="boton-hud boton-peligro" title="Cerrar sesión remota">
+                Desconectar
+            </button>
+
+            <button type="button" id="boton-minimizar-hud" class="boton-hud boton-minimizar" title="Ocultar barra flotante">
+                ▲
+            </button>
+        </div>
+    </header>
+
+    <!-- Panel Flotante de Portapapeles y Envío de Texto -->
+    <aside id="panel-portapapeles" class="panel-flotante oculto">
+        <div class="encabezado-panel">
+            <h2>Portapapeles y Texto Directo</h2>
+            <button type="button" id="boton-cerrar-portapapeles" class="boton-cerrar" title="Cerrar panel">✕</button>
+        </div>
+        <p class="descripcion-panel">
+            Lee o modifica el portapapeles del equipo remoto, o envía texto para escribirlo automáticamente.
+        </p>
+        <textarea
+            id="area-texto-portapapeles"
+            rows="5"
+            placeholder="Escribe o pega aquí el contenido para enviar al equipo remoto..."
+        ></textarea>
+        <div class="acciones-panel">
+            <button type="button" id="boton-leer-portapapeles" class="boton-hud">
+                Leer del Remoto
+            </button>
+            <button type="button" id="boton-enviar-portapapeles" class="boton-hud">
+                Copiar al Remoto
+            </button>
+            <button type="button" id="boton-escribir-texto" class="boton-primario boton-compacto">
+                Escribir Texto Directo
+            </button>
+        </div>
+        <div id="estado-portapapeles" class="estado-panel"></div>
+    </aside>
+
+    <!-- Área Principal del Escritorio Remoto -->
+    <main id="contenedor-escritorio" class="contenedor-escritorio">
+        <canvas id="lienzo-remoto" tabindex="0"></canvas>
+    </main>
+
+    <script src="/cliente.js"></script>
+</body>
+</html>

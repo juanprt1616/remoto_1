@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/equipos", "destination": "/api/equipos.js" },
+    { "source": "/info-red", "destination": "/api/equipos.js" },
+    { "source": "/Remoto_1_Portable.exe", "destination": "/estaticos/Remoto_1_Portable.exe" },
+    { "source": "/estilos.css", "destination": "/estaticos/estilos.css" },
+    { "source": "/cliente.js", "destination": "/estaticos/cliente.js" },
+    { "source": "/", "destination": "/estaticos/index.html" }
+  ]
+}

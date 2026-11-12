@@ -1,0 +1,13 @@
+# Configuración de despliegue automático desde GitHub en Render.com
+services:
+  - type: web
+    name: remoto-1-hub-api
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node servidor.js
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: TUNEL_AUTO
+        value: false
