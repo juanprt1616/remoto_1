@@ -304,6 +304,7 @@ const tiposMime = {
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.exe': 'application/octet-stream',
+  '.zip': 'application/zip',
   '.cer': 'application/x-x509-ca-cert',
   '.ps1': 'text/plain; charset=utf-8'
 };

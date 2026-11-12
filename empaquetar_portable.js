@@ -467,28 +467,32 @@ function construirEjecutablePortable() {
     { cwd: __dirname, stdio: 'inherit' }
   );
 
-  // Firmar digitalmente el ejecutable con un certificado Authenticode de firma de código
-  const rutaCer = path.join(__dirname, 'estaticos', 'Remoto_1_Certificado.cer');
-  const comandosPs1 = [
-    "$ErrorActionPreference = 'Stop'",
-    "$asunto = 'CN=Remoto_1 Proyecto Universitario'",
-    "$cert = Get-ChildItem Cert:\\CurrentUser\\My -CodeSigningCert | Where-Object { $_.Subject -eq $asunto } | Select-Object -First 1",
-    "if (-not $cert) { $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject $asunto -CertStoreLocation Cert:\\CurrentUser\\My -NotAfter (Get-Date).AddYears(5) }",
-    `Export-Certificate -Cert $cert -FilePath '${rutaCer.replace(/'/g, "''")}' -Force | Out-Null`,
-    `Import-Certificate -FilePath '${rutaCer.replace(/'/g, "''")}' -CertStoreLocation Cert:\\CurrentUser\\TrustedPublisher | Out-Null`,
-    `Set-AuthenticodeSignature -FilePath '${rutaExe.replace(/'/g, "''")}' -Certificate $cert -HashAlgorithm SHA256 | Out-Null`,
-    `if (Test-Path '${path.join(__dirname, 'motor_nativo.exe').replace(/'/g, "''")}') { Set-AuthenticodeSignature -FilePath '${path.join(__dirname, 'motor_nativo.exe').replace(/'/g, "''")}' -Certificate $cert -HashAlgorithm SHA256 | Out-Null }`,
-    `Unblock-File -Path '${rutaExe.replace(/'/g, "''")}' -ErrorAction SilentlyContinue`
-  ].join('; ');
-
+  // Generar paquete estándar Remoto_1.zip con el código fuente limpio (sin .exe precompilados)
+  // para que ningún antivirus ni política universitaria bloquee la descarga
+  const rutaZipEstaticos = path.join(__dirname, 'estaticos', 'Remoto_1.zip');
+  const carpetaTemporalZip = path.join(__dirname, 'temp_zip_remoto1');
   try {
-    execSync(`powershell -NoProfile -ExecutionPolicy Bypass -Command "${comandosPs1}"`, {
-      cwd: __dirname,
-      stdio: 'inherit'
-    });
-    console.log('[OK] Certificado Authenticode aplicado a Remoto_1_Portable.exe');
-  } catch (errFirma) {
-    console.warn('[AVISO] No se pudo aplicar firma automática:', errFirma.message);
+    if (fs.existsSync(carpetaTemporalZip)) {
+      fs.rmSync(carpetaTemporalZip, { recursive: true, force: true });
+    }
+    fs.mkdirSync( path.join(carpetaTemporalZip, 'estaticos'), { recursive: true });
+    for (const archivoRelativo of listaFinal) {
+      const origen = path.join(__dirname, archivoRelativo);
+      const destino = path.join(carpetaTemporalZip, archivoRelativo);
+      fs.mkdirSync(path.dirname(destino), { recursive: true });
+      fs.copyFileSync(origen, destino);
+    }
+    if (fs.existsSync(rutaZipEstaticos)) {
+      fs.unlinkSync(rutaZipEstaticos);
+    }
+    execSync(
+      `powershell -NoProfile -ExecutionPolicy Bypass -Command "Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::CreateFromDirectory('${carpetaTemporalZip}', '${rutaZipEstaticos}')"`,
+      { cwd: __dirname, stdio: 'inherit' }
+    );
+    fs.rmSync(carpetaTemporalZip, { recursive: true, force: true });
+    console.log('[OK] Paquete limpio creado en estaticos/Remoto_1.zip');
+  } catch (errZip) {
+    console.warn('[AVISO] Error al crear Remoto_1.zip:', errZip.message);
   }
 
   const tamanoKb = (fs.statSync(rutaExe).size / 1024).toFixed(1);

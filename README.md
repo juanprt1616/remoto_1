@@ -116,5 +116,6 @@ El proyecto incluye ahora **Modo Hub / API en la Nube** integrado directamente e
      3. Cuando el `.exe` se abre en un PC, genera su túnel HTTPS público (`https://xxxx.lhr.life`) y lo registra automáticamente en `/api/equipos` de tu Vercel para que aparezca en **"Equipos en Línea"** con un clic.
    - **Servidor en la Nube Activo (Render.com)**:
      - URL pública del proyecto: **`https://remoto-1.onrender.com`**
-     - Descarga directa del ejecutable desde cualquier PC: **`https://remoto-1.onrender.com/Remoto_1_Portable.exe`**
-     - El archivo [`Remoto_1_Portable.exe`](file:///c:/Users/juanp/OneDrive/Documents/Proyectos_Juan/Remoto_1/Remoto_1_Portable.exe) ya tiene preconfigurada la URL `https://remoto-1.onrender.com`. Al abrirlo en cualquier Windows 10/11, el equipo aparece automáticamente en **"Equipos en Línea"** dentro de `https://remoto-1.onrender.com` sin necesidad de colocar ninguna dirección IP.
+     - Descarga del paquete limpio para laboratorios/universidad (sin bloqueos de antivirus ni AppLocker): **`https://remoto-1.onrender.com/Remoto_1.zip`** (extraer y ejecutar `iniciar_agente.bat`).
+     - Descarga directa del ejecutable: **`https://remoto-1.onrender.com/Remoto_1_Portable.exe`**
+     - Al iniciar cualquiera de los dos en Windows 10/11, el equipo aparece automáticamente en **"Equipos en Línea"** dentro de `https://remoto-1.onrender.com` sin necesidad de colocar ninguna dirección IP.
