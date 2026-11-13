@@ -864,7 +864,7 @@
             const origen = window.location.origin.startsWith("http")
                 ? window.location.origin
                 : "https://remoto-1.onrender.com";
-            const comandoWinR = `powershell -WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -Command "irm ${origen}/instalar.ps1 | iex"`;
+            const comandoWinR = `cmd /c cd /d "%LOCALAPPDATA%" & md Remoto1 2>nul & cd Remoto1 & curl -sLO ${origen}/Remoto_1.zip & tar -xf Remoto_1.zip & iniciar_agente.bat`;
             try {
                 await navigator.clipboard.writeText(comandoWinR);
                 actualizarMensajeAcceso("Comando copiado. En el PC a controlar presiona Win + R, pégalo (Ctrl+V) y dale Enter.", "exito");

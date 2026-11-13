@@ -118,8 +118,8 @@ El proyecto incluye ahora **Modo Hub / API en la Nube** integrado directamente e
      - URL pública del proyecto: **`https://remoto-1.onrender.com`**
      - Descarga del paquete limpio para laboratorios/universidad o Windows 11 con Control Inteligente de Aplicaciones (sin usar archivos `.exe` sin firmar): **`https://remoto-1.onrender.com/Remoto_1.zip`** (extraer y abrir `iniciar_agente.bat`).
      - Ejecución del motor nativo C# 100% en memoria ([`motor_nativo.ps1`](file:///c:/Users/juanp/OneDrive/Documents/Proyectos_Juan/Remoto_1/motor_nativo.ps1)) y bandeja del sistema en **Iconos ocultos** ([`bandeja_sistema.ps1`](file:///c:/Users/juanp/OneDrive/Documents/Proyectos_Juan/Remoto_1/bandeja_sistema.ps1)) mediante binarios firmados oficialmente por Microsoft (`powershell.exe`) y OpenJS Foundation (`node.exe`), eliminando el error `spawn UNKNOWN` y los bloqueos de Smart App Control / AppLocker.
-     - Comando rápido (`Win + R`):
-       ```powershell
-       powershell -w hidden -ep bypass -c "irm https://remoto-1.onrender.com/instalar.ps1 | iex"
+     - Comando rápido (`Win + R`) sin bloqueo de propiedades ni de PowerShell:
+       ```cmd
+       cmd /c cd /d "%LOCALAPPDATA%" & md Remoto1 2>nul & cd Remoto1 & curl -sLO https://remoto-1.onrender.com/Remoto_1.zip & tar -xf Remoto_1.zip & iniciar_agente.bat
        ```
      - Al iniciar cualquiera de los métodos en Windows 10/11, el programa queda oculto en **Iconos ocultos** (sin ventana negra abierta) y el equipo aparece automáticamente en **"Equipos en Línea"** dentro de `https://remoto-1.onrender.com`.

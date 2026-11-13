@@ -22,11 +22,7 @@ if %errorlevel% equ 0 (
 ) else (
     echo [1/3] Node.js no detectado en este equipo.
     echo       Descargando binario oficial firmado de Node.js ^(node.exe^)...
-    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-        "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; " ^
-        "$ProgressPreference = 'SilentlyContinue'; " ^
-        "Invoke-WebRequest -Uri 'https://nodejs.org/dist/v22.11.0/win-x64/node.exe' -OutFile '%~dp0node.exe'; " ^
-        "Unblock-File -Path '%~dp0node.exe' -ErrorAction SilentlyContinue"
+    curl.exe -sL "https://nodejs.org/dist/v22.11.0/win-x64/node.exe" -o "%~dp0node.exe"
     if exist "%~dp0node.exe" (
         set "COMANDO_NODE=%~dp0node.exe"
         echo       [OK] Node.js oficial descargado en la carpeta.
