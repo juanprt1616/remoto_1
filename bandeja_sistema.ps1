@@ -71,7 +71,14 @@ $script:saliendoIntencionalmente = $false
 
 function Detener-InstanciasPreviasServidor {
     try {
-        Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" | Where-Object {
+        Get-NetTCPConnection -LocalPort 8080 -State Listen -ErrorAction SilentlyContinue | ForEach-Object {
+            if ($_.OwningProcess -gt 4) {
+                Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue
+            }
+        }
+    } catch {}
+    try {
+        Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" -ErrorAction SilentlyContinue | Where-Object {
             $_.CommandLine -match 'servidor\.js'
         } | ForEach-Object {
             Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue

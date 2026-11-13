@@ -1414,13 +1414,27 @@ function mostrarDireccionesRed(puerto) {
 }
 
 // Iniciar servidor HTTP, motor nativo, registro en API en la nube y túnel público
-servidorHttp.listen(configuracion.puerto, '0.0.0.0', () => {
-  mostrarDireccionesRed(configuracion.puerto);
+let puertoEscuchaActual = configuracion.puerto;
+
+servidorHttp.on('error', (err) => {
+  if (err && err.code === 'EADDRINUSE' && esWindows) {
+    puertoEscuchaActual += 1;
+    configuracion.puerto = puertoEscuchaActual;
+    setTimeout(() => {
+      servidorHttp.listen(puertoEscuchaActual, '0.0.0.0');
+    }, 150);
+  } else {
+    console.error('[ERROR HTTP]', err.message);
+  }
+});
+
+servidorHttp.listen(puertoEscuchaActual, '0.0.0.0', () => {
+  mostrarDireccionesRed(puertoEscuchaActual);
   iniciarMotorNativo();
   if (configuracion.urlNube) {
     iniciarConexionHaciaApiNube();
   }
-  iniciarTunelPublico(configuracion.puerto);
+  iniciarTunelPublico(puertoEscuchaActual);
 });
 
 // Limpieza ordenada al cerrar el proceso de Node.js

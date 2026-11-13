@@ -46,5 +46,5 @@ if errorlevel 1 (
 
 :: 4. Iniciar agente silencioso en segundo plano (Iconos ocultos) usando PowerShell firmado por Microsoft
 echo [3/3] Iniciando Remoto_1 en segundo plano (Iconos ocultos)...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath 'powershell.exe' -ArgumentList '-NoProfile -STA -WindowStyle Hidden -ExecutionPolicy Bypass -File \"%~dp0bandeja_sistema.ps1\"' -WorkingDirectory '%~dp0' -WindowStyle Hidden"
+start "" powershell.exe -NoProfile -STA -WindowStyle Hidden -ExecutionPolicy Bypass -File "%~dp0bandeja_sistema.ps1"
 exit /b 0
