@@ -11,7 +11,7 @@ using System.Windows.Forms;
 
 namespace Remoto1
 {
-    internal static class MotorNativo
+    public static class MotorNativo
     {
         // =====================================================================
         // Importaciones de la API nativa de Windows (user32.dll)

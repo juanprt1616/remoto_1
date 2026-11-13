@@ -11,6 +11,8 @@ const archivosAEmpaquetar = [
   'configuracion.js',
   'servidor.js',
   'motor_nativo.cs',
+  'motor_nativo.ps1',
+  'bandeja_sistema.ps1',
   'package.json',
   'iniciar_agente.bat',
   'estaticos/index.html',
@@ -306,47 +308,10 @@ ${entradasCs}
         private static void AsegurarMotorNativoCompilado(string directorioDestino)
         {
             string rutaExe = Path.Combine(directorioDestino, "motor_nativo.exe");
-            string rutaCs = Path.Combine(directorioDestino, "motor_nativo.cs");
-
             if (File.Exists(rutaExe))
             {
-                return;
+                try { File.Delete(rutaExe); } catch { }
             }
-
-            string[] rutasCsc = new string[]
-            {
-                @"C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe",
-                @"C:\\Windows\\Microsoft.NET\\Framework\\v4.0.30319\\csc.exe"
-            };
-
-            foreach (string csc in rutasCsc)
-            {
-                if (!File.Exists(csc)) continue;
-
-                ProcessStartInfo psi = new ProcessStartInfo
-                {
-                    FileName = csc,
-                    Arguments = "/nologo /optimize+ /target:exe /out:\\"" + rutaExe + "\\" /r:System.Windows.Forms.dll /r:System.Drawing.dll \\"" + rutaCs + "\\"",
-                    WorkingDirectory = directorioDestino,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                using (Process proc = Process.Start(psi))
-                {
-                    if (proc != null)
-                    {
-                        proc.WaitForExit();
-                    }
-                }
-
-                if (File.Exists(rutaExe))
-                {
-                    return;
-                }
-            }
-
-            throw new Exception("No se pudo compilar motor_nativo.exe con el compilador nativo de Windows.");
         }
 
         private static string AsegurarNodeDisponible(string directorioDestino)

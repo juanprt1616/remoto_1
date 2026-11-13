@@ -679,34 +679,26 @@ function procesarFlujoMotor(fragmento) {
   }
 }
 
-// Compilación e inicio del proceso hijo motor_nativo.exe
-function compilarMotorSiNecesario(rutaExe, rutaCs) {
-  if (fs.existsSync(rutaExe)) return true;
+// Preparación e inicio del proceso hijo motor nativo en memoria mediante PowerShell firmado por Microsoft
+function asegurarScriptMotorPs1(rutaPs1, rutaCs) {
   if (!fs.existsSync(rutaCs)) return false;
-
-  const rutasCompilador = [
-    'C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe',
-    'C:\\Windows\\Microsoft.NET\\Framework\\v4.0.30319\\csc.exe',
-    'csc.exe'
-  ];
-
-  for (const rutaCsc of rutasCompilador) {
-    if (rutaCsc !== 'csc.exe' && !fs.existsSync(rutaCsc)) continue;
+  if (!fs.existsSync(rutaPs1)) {
+    const contenidoPs1 = [
+      "$ErrorActionPreference = 'Stop'",
+      "$WarningPreference = 'SilentlyContinue'",
+      "$ProgressPreference = 'SilentlyContinue'",
+      "$rutaCs = Join-Path $PSScriptRoot 'motor_nativo.cs'",
+      "$codigoCs = [System.IO.File]::ReadAllText($rutaCs, [System.Text.Encoding]::UTF8)",
+      "Add-Type -TypeDefinition $codigoCs -ReferencedAssemblies @('System.Drawing', 'System.Windows.Forms') -IgnoreWarnings *>$null",
+      "[Remoto1.MotorNativo]::Main(@())"
+    ].join('\r\n');
     try {
-      console.log('[INFO] Compilando motor_nativo.cs con', rutaCsc);
-      execSync(
-        `"${rutaCsc}" /nologo /optimize+ /target:exe /out:"${rutaExe}" /r:System.Windows.Forms.dll /r:System.Drawing.dll "${rutaCs}"`,
-        { cwd: __dirname, stdio: 'pipe' }
-      );
-      if (fs.existsSync(rutaExe)) {
-        console.log('[OK] motor_nativo.exe compilado correctamente.');
-        return true;
-      }
-    } catch (errorCompilacion) {
-      // Si otro proceso lo está compilando o aún se está escribiendo, reintentaremos luego
+      fs.writeFileSync(rutaPs1, contenidoPs1, 'utf8');
+    } catch (err) {
+      return false;
     }
   }
-  return fs.existsSync(rutaExe);
+  return true;
 }
 
 function iniciarMotorNativo() {
@@ -714,25 +706,29 @@ function iniciarMotorNativo() {
     console.log('[MODO NUBE] Ejecutando como Hub/API central en la nube (sin motor local de Windows).');
     return;
   }
-  const rutaExe = path.join(__dirname, 'motor_nativo.exe');
+  const rutaPs1 = path.join(__dirname, 'motor_nativo.ps1');
   const rutaCs = path.join(__dirname, 'motor_nativo.cs');
 
-  if (!compilarMotorSiNecesario(rutaExe, rutaCs)) {
+  if (!asegurarScriptMotorPs1(rutaPs1, rutaCs)) {
     setTimeout(iniciarMotorNativo, 1500);
     return;
   }
 
   try {
-    procesoMotor = spawn(rutaExe, [], {
-      cwd: __dirname,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      windowsHide: true
-    });
+    procesoMotor = spawn(
+      'powershell.exe',
+      ['-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass', '-File', rutaPs1],
+      {
+        cwd: __dirname,
+        stdio: ['pipe', 'pipe', 'pipe'],
+        windowsHide: true
+      }
+    );
 
     bufferMotor = Buffer.alloc(0);
     capturaEnCurso = false;
 
-    console.log(`[OK] Proceso motor_nativo.exe iniciado (PID: ${procesoMotor.pid}).`);
+    console.log(`[OK] Motor nativo en memoria iniciado (PID: ${procesoMotor.pid}).`);
 
     procesoMotor.stdout.on('data', (fragmento) => {
       procesarFlujoMotor(fragmento);
@@ -746,14 +742,14 @@ function iniciarMotorNativo() {
     });
 
     procesoMotor.on('close', (codigoSalida) => {
-      console.warn(`[AVISO] motor_nativo.exe finalizó con código ${codigoSalida}. Reiniciando en 1.5s...`);
+      console.warn(`[AVISO] Motor nativo finalizó con código ${codigoSalida}. Reiniciando en 1.5s...`);
       procesoMotor = null;
       capturaEnCurso = false;
       setTimeout(iniciarMotorNativo, 1500);
     });
 
     procesoMotor.on('error', (errorProceso) => {
-      console.error('[ERROR] Fallo en motor_nativo.exe:', errorProceso.message);
+      console.error('[ERROR] Fallo en motor nativo:', errorProceso.message);
     });
 
     // Solicitar lista inicial de monitores al arrancar el motor
@@ -762,7 +758,7 @@ function iniciarMotorNativo() {
       programarSiguienteCaptura();
     }
   } catch (errorInicio) {
-    console.error('[ERROR] No se pudo iniciar motor_nativo.exe:', errorInicio.message);
+    console.error('[ERROR] No se pudo iniciar motor nativo:', errorInicio.message);
     setTimeout(iniciarMotorNativo, 2000);
   }
 }
