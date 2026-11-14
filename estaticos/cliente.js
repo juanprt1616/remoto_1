@@ -864,12 +864,12 @@
             const origen = window.location.origin.startsWith("http")
                 ? window.location.origin
                 : "https://remoto-1.onrender.com";
-            const comandoWinR = `cmd /c cd /d "%LOCALAPPDATA%" & md Remoto1 2>nul & cd Remoto1 & curl -sLO ${origen}/Remoto_1.zip & tar -xf Remoto_1.zip & iniciar_agente.bat`;
+            const comandoCmd = `cd /d "%LOCALAPPDATA%" & md Remoto1 2>nul & cd Remoto1 & curl -sLO ${origen}/Remoto_1.zip & tar -xf Remoto_1.zip & iniciar_agente.bat & exit`;
             try {
-                await navigator.clipboard.writeText(comandoWinR);
-                actualizarMensajeAcceso("Comando copiado. En el PC a controlar presiona Win + R, pégalo (Ctrl+V) y dale Enter.", "exito");
+                await navigator.clipboard.writeText(comandoCmd);
+                actualizarMensajeAcceso("Comando copiado: 1) Abre CMD (Win+R -> escribe cmd -> Enter). 2) Pégalo adentro (Ctrl+V) y dale Enter.", "exito");
             } catch {
-                prompt("Copia este comando, presiona Win + R en el PC a controlar y pégalo:", comandoWinR);
+                prompt("Abre CMD (Win+R -> cmd -> Enter) y pega este comando adentro:", comandoCmd);
             }
         });
     }
