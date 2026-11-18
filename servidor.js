@@ -687,7 +687,8 @@ function asegurarScriptMotorPs1(rutaPs1, rutaCs) {
       "$ErrorActionPreference = 'Stop'",
       "$WarningPreference = 'SilentlyContinue'",
       "$ProgressPreference = 'SilentlyContinue'",
-      "$rutaCs = Join-Path $PSScriptRoot 'motor_nativo.cs'",
+      "$directorioBase = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }",
+      "$rutaCs = Join-Path $directorioBase 'motor_nativo.cs'",
       "$codigoCs = [System.IO.File]::ReadAllText($rutaCs, [System.Text.Encoding]::UTF8)",
       "Add-Type -TypeDefinition $codigoCs -ReferencedAssemblies @('System.Drawing', 'System.Windows.Forms') -IgnoreWarnings *>$null",
       "[Remoto1.MotorNativo]::Main(@())"
@@ -715,9 +716,10 @@ function iniciarMotorNativo() {
   }
 
   try {
+    const comandoMemoria = "Invoke-Expression ([System.IO.File]::ReadAllText('motor_nativo.ps1', [System.Text.Encoding]::UTF8))";
     procesoMotor = spawn(
       'powershell.exe',
-      ['-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass', '-File', rutaPs1],
+      ['-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass', '-Command', comandoMemoria],
       {
         cwd: __dirname,
         stdio: ['pipe', 'pipe', 'pipe'],

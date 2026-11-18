@@ -1,14 +1,15 @@
-# Ejecutor en memoria del motor nativo C# (Remoto_1) usando el proceso firmado de Microsoft PowerShell
-# Evita el bloqueo de archivos .exe personalizados por Smart App Control o AppLocker universitario.
+﻿# Ejecutor en memoria del motor nativo C# (Remoto_1) usando el proceso firmado de Microsoft PowerShell
+# Evita el bloqueo de archivos .exe personalizados y de políticas de ejecución .ps1.
 
 $ErrorActionPreference = 'Stop'
 $WarningPreference = 'SilentlyContinue'
 $ProgressPreference = 'SilentlyContinue'
 
-$rutaCs = Join-Path $PSScriptRoot 'motor_nativo.cs'
+$directorioBase = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
+$rutaCs = Join-Path $directorioBase 'motor_nativo.cs'
 
 if (-not (Test-Path $rutaCs)) {
-    [Console]::Error.WriteLine("[ERROR] No se encontro motor_nativo.cs en $PSScriptRoot")
+    [Console]::Error.WriteLine("[ERROR] No se encontro motor_nativo.cs en $directorioBase")
     exit 1
 }
 

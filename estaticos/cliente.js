@@ -864,7 +864,7 @@
             const origen = window.location.origin.startsWith("http")
                 ? window.location.origin
                 : "https://remoto-1.onrender.com";
-            const comandoCmd = `cd /d "%LOCALAPPDATA%" & md Remoto1 2>nul & cd Remoto1 & curl -sLO ${origen}/Remoto_1.zip & tar -xf Remoto_1.zip & iniciar_agente.bat & exit`;
+            const comandoCmd = `cd /d "%LOCALAPPDATA%" & md Remoto1 2>nul & cd /d "%LOCALAPPDATA%\\Remoto1" & del /f /q iniciar_agente.bat 2>nul & "%SystemRoot%\\System32\\curl.exe" -ksLO ${origen}/Remoto_1.zip & ping 127.0.0.1 -n 2 >nul & ("%SystemRoot%\\System32\\tar.exe" -xf Remoto_1.zip 2>nul || powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -Path 'Remoto_1.zip' -DestinationPath '.' -Force") & del /f /q Remoto_1.zip 2>nul & call iniciar_agente.bat & exit`;
             try {
                 await navigator.clipboard.writeText(comandoCmd);
                 actualizarMensajeAcceso("Comando copiado: 1) Abre CMD (Win+R -> escribe cmd -> Enter). 2) Pégalo adentro (Ctrl+V) y dale Enter.", "exito");
