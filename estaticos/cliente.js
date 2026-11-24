@@ -576,12 +576,24 @@
         }
     }
 
-    // Eventos de ratón sobre el lienzo remoto
+    // Eventos de ratón sobre el lienzo remoto (con protección anti-arrastre involuntario y liberación garantizada)
+    let botonPresionadoActual = null;
+    let momentoPresionRaton = 0;
+    let coordPresionNormalizada = { x: 0, y: 0 };
+    let pixelPresionCliente = { x: 0, y: 0 };
+
     lienzo.addEventListener("mousemove", (evento) => {
         if (!autenticado) return;
         const ahora = performance.now();
         if (ahora - ultimoEnvioMovimiento < 25) {
             return;
+        }
+        if (botonPresionadoActual) {
+            const dx = Math.abs(evento.clientX - pixelPresionCliente.x);
+            const dy = Math.abs(evento.clientY - pixelPresionCliente.y);
+            if (dx < 8 && dy < 8 && ahora - momentoPresionRaton < 300) {
+                return;
+            }
         }
         ultimoEnvioMovimiento = ahora;
         const { x, y } = obtenerCoordenadasNormalizadas(evento);
@@ -597,6 +609,10 @@
         lienzo.focus();
         const { x, y } = obtenerCoordenadasNormalizadas(evento);
         const boton = traducirBotonRaton(evento.button);
+        botonPresionadoActual = boton;
+        momentoPresionRaton = performance.now();
+        coordPresionNormalizada = { x, y };
+        pixelPresionCliente = { x: evento.clientX, y: evento.clientY };
         enviarMensajeJson({
             tipo: "raton_boton",
             boton,
@@ -606,17 +622,35 @@
         });
     });
 
-    lienzo.addEventListener("mouseup", (evento) => {
+    window.addEventListener("mouseup", (evento) => {
         if (!autenticado) return;
-        const { x, y } = obtenerCoordenadasNormalizadas(evento);
-        const boton = traducirBotonRaton(evento.button);
+        if (!botonPresionadoActual && evento.target !== lienzo) return;
+        const boton = botonPresionadoActual || traducirBotonRaton(evento.button);
+        const dx = Math.abs(evento.clientX - pixelPresionCliente.x);
+        const dy = Math.abs(evento.clientY - pixelPresionCliente.y);
+        const esClicFijo = botonPresionadoActual && dx < 8 && dy < 8;
+        const coords = esClicFijo ? coordPresionNormalizada : obtenerCoordenadasNormalizadas(evento);
+        botonPresionadoActual = null;
         enviarMensajeJson({
             tipo: "raton_boton",
             boton,
             estado: "arriba",
-            x,
-            y
+            x: coords.x,
+            y: coords.y
         });
+    });
+
+    window.addEventListener("blur", () => {
+        if (autenticado && botonPresionadoActual) {
+            enviarMensajeJson({
+                tipo: "raton_boton",
+                boton: botonPresionadoActual,
+                estado: "arriba",
+                x: coordPresionNormalizada.x,
+                y: coordPresionNormalizada.y
+            });
+            botonPresionadoActual = null;
+        }
     });
 
     lienzo.addEventListener("dblclick", (evento) => {
