@@ -40,6 +40,9 @@ namespace Remoto1
         [DllImport("user32.dll")]
         private static extern bool DrawIcon(IntPtr hDC, int X, int Y, IntPtr hIcon);
 
+        [DllImport("user32.dll")]
+        private static extern short GetAsyncKeyState(int vKey);
+
         [StructLayout(LayoutKind.Sequential)]
         private struct PuntoNativo
         {
@@ -530,8 +533,41 @@ namespace Remoto1
             SetCursorPos(xReal, yReal);
         }
 
+        private static bool modificadorAltActivo = false;
+        private static bool modificadorCtrlActivo = false;
+        private static bool modificadorShiftActivo = false;
+
+        private static void LiberarModificadoresParaClic()
+        {
+            if (modificadorAltActivo || (GetAsyncKeyState(0x12) & 0x8000) != 0)
+            {
+                keybd_event(0x12, 0, EVENTO_TECLA_ARRIBA, UIntPtr.Zero);
+                keybd_event(0xA4, 0, EVENTO_TECLA_ARRIBA, UIntPtr.Zero);
+                keybd_event(0xA5, 0, EVENTO_TECLA_EXTENDIDA | EVENTO_TECLA_ARRIBA, UIntPtr.Zero);
+                modificadorAltActivo = false;
+            }
+            if (modificadorCtrlActivo)
+            {
+                keybd_event(0x11, 0, EVENTO_TECLA_ARRIBA, UIntPtr.Zero);
+                keybd_event(0xA2, 0, EVENTO_TECLA_ARRIBA, UIntPtr.Zero);
+                keybd_event(0xA3, 0, EVENTO_TECLA_EXTENDIDA | EVENTO_TECLA_ARRIBA, UIntPtr.Zero);
+                modificadorCtrlActivo = false;
+            }
+            if (modificadorShiftActivo)
+            {
+                keybd_event(0x10, 0, EVENTO_TECLA_ARRIBA, UIntPtr.Zero);
+                keybd_event(0xA0, 0, EVENTO_TECLA_ARRIBA, UIntPtr.Zero);
+                keybd_event(0xA1, 0, EVENTO_TECLA_ARRIBA, UIntPtr.Zero);
+                modificadorShiftActivo = false;
+            }
+        }
+
         private static void EjecutarBotonRaton(string boton, string estado, int indiceMonitor, double xNorm, double yNorm)
         {
+            if (estado == "abajo" || estado == "clic" || estado == "doble_clic")
+            {
+                LiberarModificadoresParaClic();
+            }
             MoverCursorNormalizado(indiceMonitor, xNorm, yNorm);
             ultimoEventoEntrada = string.Format("Ratón {0} [{1}] en ({2}, {3})", boton, estado, ultimoCursorX, ultimoCursorY);
 
@@ -590,10 +626,16 @@ namespace Remoto1
 
             if (estado == "abajo")
             {
+                if (vk == 0x12 || vk == 0xA4 || vk == 0xA5) modificadorAltActivo = true;
+                else if (vk == 0x11 || vk == 0xA2 || vk == 0xA3) modificadorCtrlActivo = true;
+                else if (vk == 0x10 || vk == 0xA0 || vk == 0xA1) modificadorShiftActivo = true;
                 keybd_event(vk, 0, banderas, UIntPtr.Zero);
             }
             else if (estado == "arriba")
             {
+                if (vk == 0x12 || vk == 0xA4 || vk == 0xA5) modificadorAltActivo = false;
+                else if (vk == 0x11 || vk == 0xA2 || vk == 0xA3) modificadorCtrlActivo = false;
+                else if (vk == 0x10 || vk == 0xA0 || vk == 0xA1) modificadorShiftActivo = false;
                 keybd_event(vk, 0, banderas | EVENTO_TECLA_ARRIBA, UIntPtr.Zero);
             }
             else if (estado == "pulsar")

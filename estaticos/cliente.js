@@ -679,6 +679,23 @@
     });
 
     // Captura de teclado cuando el usuario no está escribiendo en un campo de formulario
+    const teclasPresionadas = new Set();
+
+    function liberarTodasLasTeclasActivas() {
+        if (!autenticado) {
+            teclasPresionadas.clear();
+            return;
+        }
+        for (const vk of teclasPresionadas) {
+            enviarMensajeJson({
+                tipo: "tecla",
+                vk,
+                estado: "arriba"
+            });
+        }
+        teclasPresionadas.clear();
+    }
+
     function focoEnCampoDeEntrada() {
         const elementoActivo = document.activeElement;
         if (!elementoActivo) return false;
@@ -690,9 +707,18 @@
         if (!autenticado || focoEnCampoDeEntrada()) {
             return;
         }
-        evento.preventDefault();
         const vk = obtenerCodigoVK(evento);
+        // Ignorar tecla Alt suelta (VK 18) para que al hacer Alt+Tab en el PC controlador
+        // nunca se quede pegada la tecla Alt en el PC remoto (en Chrome Alt+Clic descarga enlaces en vez de abrirlos)
+        if (vk === 18) {
+            return;
+        }
+        evento.preventDefault();
         if (vk > 0) {
+            if (evento.repeat && (vk === 16 || vk === 17 || vk === 91)) {
+                return;
+            }
+            teclasPresionadas.add(vk);
             enviarMensajeJson({
                 tipo: "tecla",
                 vk,
@@ -705,15 +731,33 @@
         if (!autenticado || focoEnCampoDeEntrada()) {
             return;
         }
-        evento.preventDefault();
         const vk = obtenerCodigoVK(evento);
+        if (vk === 18) {
+            if (teclasPresionadas.has(18)) {
+                teclasPresionadas.delete(18);
+                enviarMensajeJson({ tipo: "tecla", vk: 18, estado: "arriba" });
+            }
+            return;
+        }
+        evento.preventDefault();
         if (vk > 0) {
+            teclasPresionadas.delete(vk);
             enviarMensajeJson({
                 tipo: "tecla",
                 vk,
                 estado: "arriba"
             });
         }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            liberarTodasLasTeclasActivas();
+        }
+    });
+
+    window.addEventListener("blur", () => {
+        liberarTodasLasTeclasActivas();
     });
 
     // Controles de la barra HUD
