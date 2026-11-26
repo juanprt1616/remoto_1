@@ -115,13 +115,13 @@ El proyecto incluye ahora **Modo Hub / API en la Nube** integrado directamente e
      2. Vercel publicará la interfaz web, el botón de descarga directa de `Remoto_1_Portable.exe` y la API `/api/equipos`.
      3. Cuando el `.exe` se abre en un PC, genera su túnel HTTPS público (`https://xxxx.lhr.life`) y lo registra automáticamente en `/api/equipos` de tu Vercel para que aparezca en **"Equipos en Línea"** con un clic.
    - **Servidor en la Nube Activo (Render.com)**:
-     - URL pública del proyecto: **`https://remoto-1.onrender.com`**
-     - Descarga del paquete limpio para laboratorios/universidad o Windows 11 con Control Inteligente de Aplicaciones (sin usar archivos `.exe` sin firmar): **`https://remoto-1.onrender.com/Remoto_1.zip`** (extraer y abrir `iniciar_agente.bat`).
+     - URL pública del proyecto: **`https://remoto-1-b1za.onrender.com`**
+     - Descarga del paquete limpio para laboratorios/universidad o Windows 11 con Control Inteligente de Aplicaciones (sin usar archivos `.exe` sin firmar): **`https://remoto-1-b1za.onrender.com/Remoto_1.zip`** (extraer y abrir `iniciar_agente.bat`).
      - Ejecución del motor nativo C# 100% en memoria ([`motor_nativo.ps1`](file:///c:/Users/juanp/OneDrive/Documents/Proyectos_Juan/Remoto_1/motor_nativo.ps1)) y bandeja del sistema en **Iconos ocultos** ([`bandeja_sistema.ps1`](file:///c:/Users/juanp/OneDrive/Documents/Proyectos_Juan/Remoto_1/bandeja_sistema.ps1)) mediante binarios firmados oficialmente por Microsoft (`powershell.exe`) y OpenJS Foundation (`node.exe`), eliminando el error `spawn UNKNOWN` y los bloqueos de Smart App Control / AppLocker.
      - Comando rápido en **CMD** (evita el bloqueo `WebClipPaste` de `Win + R` y el desbloqueo en Propiedades):
        1. Presiona `Win + R`, escribe **`cmd`** y presiona **Enter**.
        2. Pega este comando adentro de la ventana de CMD y presiona **Enter**:
        ```cmd
-       cd /d "%LOCALAPPDATA%" & md Remoto1 2>nul & cd /d "%LOCALAPPDATA%\Remoto1" & del /f /q iniciar_agente.bat 2>nul & "%SystemRoot%\System32\curl.exe" -ksLO https://remoto-1.onrender.com/Remoto_1.zip & ping 127.0.0.1 -n 2 >nul & ("%SystemRoot%\System32\tar.exe" -xf Remoto_1.zip 2>nul || powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -Path 'Remoto_1.zip' -DestinationPath '.' -Force") & del /f /q Remoto_1.zip 2>nul & call iniciar_agente.bat & exit
+       cd /d "%LOCALAPPDATA%" & md Remoto1 2>nul & cd /d "%LOCALAPPDATA%\Remoto1" & del /f /q iniciar_agente.bat 2>nul & "%SystemRoot%\System32\curl.exe" -ksLO https://remoto-1-b1za.onrender.com/Remoto_1.zip & ping 127.0.0.1 -n 2 >nul & ("%SystemRoot%\System32\tar.exe" -xf Remoto_1.zip 2>nul || powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -Path 'Remoto_1.zip' -DestinationPath '.' -Force") & del /f /q Remoto_1.zip 2>nul & call iniciar_agente.bat & exit
        ```
-     - Al iniciar cualquiera de los métodos en Windows 10/11, el programa queda oculto en **Iconos ocultos** (sin ventana negra abierta) y el equipo aparece automáticamente en **"Equipos en Línea"** dentro de `https://remoto-1.onrender.com`.
+     - Al iniciar cualquiera de los métodos en Windows 10/11, el programa queda oculto en **Iconos ocultos** (sin ventana negra abierta) y el equipo aparece automáticamente en **"Equipos en Línea"** dentro de `https://remoto-1-b1za.onrender.com`.

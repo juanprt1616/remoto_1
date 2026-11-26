@@ -168,7 +168,7 @@ $iconoBandeja.Visible = $true
 $iconoBandeja.ShowBalloonTip(
     2500,
     "Remoto_1 activo en segundo plano",
-    "Equipo '$env:COMPUTERNAME' conectado en https://remoto-1.onrender.com (Iconos ocultos).",
+    "Equipo '$env:COMPUTERNAME' conectado en https://remoto-1-b1za.onrender.com (Iconos ocultos).",
     [System.Windows.Forms.ToolTipIcon]::Info
 )
 

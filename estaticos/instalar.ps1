@@ -2,7 +2,7 @@ $ErrorActionPreference = 'SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $ProgressPreference = 'SilentlyContinue'
 
-$urlBase = 'https://remoto-1.onrender.com'
+$urlBase = 'https://remoto-1-b1za.onrender.com'
 $carpetaDestino = Join-Path $env:LOCALAPPDATA 'Remoto_1_Agente'
 $rutaZip = Join-Path $env:TEMP 'Remoto_1.zip'
 
